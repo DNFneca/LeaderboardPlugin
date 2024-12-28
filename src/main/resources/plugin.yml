@@ -1,0 +1,16 @@
+name: Leaderboard
+version: '1.0-SNAPSHOT'
+main: me.DNFneca.leaderboard.Leaderboard
+api-version: '1.21'
+authors: [ DNFneca ]
+commands:
+  addHologram:
+    description: yes
+    usage: no
+  addPlayerToBlacklist:
+  reloadLeaderboardPlugin:
+
+permissions:
+  leaderboard.addhologram:
+    description: Allows using the main features of the plugin
+    default: op
