@@ -1,7 +1,6 @@
 package me.DNFneca.leaderboard.utils.db;
 
 import me.DNFneca.leaderboard.utils.blacklist.BlacklistPlayer;
-import me.DNFneca.leaderboard.utils.player.PlayerData;
 import me.DNFneca.leaderboard.utils.player.PlayerScore;
 
 public class PlayerBlacklistDatabase extends Database<BlacklistPlayer> {
@@ -30,9 +29,5 @@ public class PlayerBlacklistDatabase extends Database<BlacklistPlayer> {
         return true;
     }
 
-    public PlayerData getEntity(String id) {
-        update();
-        return null;
-    }
 
 }

@@ -1,36 +1,26 @@
 package me.DNFneca.leaderboard.utils.board;
 
 import me.DNFneca.leaderboard.Leaderboard;
-import me.DNFneca.leaderboard.utils.player.PlayerData;
-import me.DNFneca.leaderboard.utils.player.PlayerScore;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
+import org.bukkit.*;
+import org.bukkit.entity.EntityType;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class Board {
-    private String id;
+    private final String id;
+    String statisticType;
     private BoardRow mainRow;
-    private String eventName;
+    private Statistic statistic;
+    private Material statisticMaterial;
+    private EntityType statisticEntityType;
     private int maxLength;
     private ArrayList<BoardRow> rows = new ArrayList<BoardRow>(20);
     private String worldUUID;
     private double x;
     private double y;
     private double z;
-    public Board(double x, double y, double z, String name, World world, int maxLength) {
-        this.x = Math.floor(x + .5);
-        this.y = Math.floor(y - 1);
-        this.z = Math.floor(z + .5);
-        this.maxLength = maxLength;
-        worldUUID = world.getUID().toString();
-        mainRow = new BoardRow(name, new Location(world, Math.floor(x + .5), Math.floor(y - 1), Math.floor(z + .5)));
-        id = mainRow.getId();
-        Leaderboard.boardDB.boardsCollection.addBoard(this);
-    }
 
     public Board(Location location, String name, int maxLength) {
         worldUUID = location.getWorld().getUID().toString();
@@ -38,13 +28,21 @@ public class Board {
         this.y = Math.floor(location.getY()) - 1;
         this.z = Math.floor(location.getZ()) + .5;
         this.maxLength = maxLength;
-        mainRow = new BoardRow(name, new Location(location.getWorld(), this.x, y, z));
+        mainRow = new BoardRow(Component.text(name).color(TextColor.fromHexString("#00ffff")), new Location(location.getWorld(), this.x, y, z));
         id = mainRow.getId();
         Leaderboard.boardDB.boardsCollection.addBoard(this);
     }
 
     public String getId() {
         return id;
+    }
+
+    public BoardRow getMainRow() {
+        return mainRow;
+    }
+
+    public void setMainRow(BoardRow mainRow) {
+        this.mainRow = mainRow;
     }
 
     public Location getLoc() {
@@ -59,15 +57,68 @@ public class Board {
         return rows;
     }
 
-    public void addRow(String rowContent) {
+    public void addRow(Component rowContent) {
         bringUpRows();
         rows.add(new BoardRow(rowContent, getLoc()));
     }
 
     public void removeRow(int index) {
+        if (Bukkit.getEntity(UUID.fromString(rows.get(index).getId())) == null) return;
         Bukkit.getEntity(UUID.fromString(rows.get(index).getId())).remove();
         rows.remove(index);
         bringDownRows();
+    }
+
+    public String getStatisticType() {
+        return statisticType;
+    }
+
+    public void setStatisticType(String statisticType) {
+        this.statisticType = statisticType;
+    }
+
+    public Statistic getStatistic() {
+        return statistic;
+    }
+
+    public void setStatistic(Statistic statistic) {
+        this.statistic = statistic;
+        this.statisticMaterial = null;
+        this.statisticEntityType = null;
+        this.statisticType = "";
+        update();
+    }
+
+    public void setStatistic(Statistic statistic, Material statisticMaterial) {
+        this.statistic = statistic;
+        this.statisticMaterial = statisticMaterial;
+        this.statisticEntityType = null;
+        this.statisticType = "";
+        update();
+    }
+
+    public void setStatistic(Statistic statistic, EntityType statisticEntityType) {
+        this.statistic = statistic;
+        this.statisticEntityType = statisticEntityType;
+        this.statisticMaterial = null;
+        this.statisticType = "";
+        update();
+    }
+
+    public EntityType getStatisticEntityType() {
+        return statisticEntityType;
+    }
+
+    public Material getStatisticMaterial() {
+        return statisticMaterial;
+    }
+
+    public void removeBoard() {
+        for (int i = 0; i < rows.size(); i++) {
+            removeRow(i);
+        }
+        Bukkit.getEntity(UUID.fromString(mainRow.getId())).remove();
+        Leaderboard.boardDB.boardsCollection.removeBoard(this);
     }
 
     public void setRow(int index, BoardRow row) {
@@ -97,42 +148,55 @@ public class Board {
     }
 
     public void update() {
-        if(Leaderboard.playerStats.entityScores == null) return;
-        List<PlayerData> entityDataArrayList;
-        entityDataArrayList = Leaderboard.playerStats.entityScores.getCollection();
-        String tempI, tempJ;
-        for (int i = 0; i < entityDataArrayList.size(); i++) {
-            int minIndex = i;
-            for (int j = i + 1; j < entityDataArrayList.size(); j++) {
-                tempJ = entityDataArrayList.get(j).getScore("PlayerDeathEvent").getScore();
-                tempI = entityDataArrayList.get(i).getScore("PlayerDeathEvent").getScore();
-                if((tempJ != null && tempI != null)) {
-                    if(Integer.parseInt(tempI) > Integer.parseInt(entityDataArrayList.get(minIndex).getScore("PlayerDeathEvent").getScore())) {
-                        minIndex = j;
-                    }
-                    PlayerScore temp = entityDataArrayList.get(minIndex).getScore("PlayerDeathEvent");
-                    entityDataArrayList.get(minIndex).editScore("PlayerDeathEvent", entityDataArrayList.get(i).getScore("PlayerDeathEvent"));
-                    entityDataArrayList.get(i).editScore("PlayerDeathEvent", temp);
+        ArrayList<Map.Entry<String, Integer>> scores = new ArrayList<>();
+        if (statisticMaterial != null) {
+            for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
+                scores.add(Map.entry(player.getName(), player.getStatistic(statistic, statisticMaterial)));
+            }
+        } else if (statisticEntityType != null) {
+            for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
+                scores.add(Map.entry(player.getName(), player.getStatistic(statistic, statisticEntityType)));
+            }
+        } else if (statistic != null) {
+            for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
+                scores.add(Map.entry(player.getName(), player.getStatistic(statistic)));
+            }
+        } else {
+            Leaderboard.boardDB.saveData();
+            return;
+        }
+        for (int i = 0; i < scores.size() - 1; i++) {
+            for (int j = 0; j < scores.size() - 1 - i; j++) {
+                if (scores.get(j).getValue() < scores.get(j + 1).getValue()) {
+                    Map.Entry<String, Integer> tempPlayerData = scores.get(j);
+                    scores.set(j, scores.get(j + 1));
+                    scores.set(j + 1, tempPlayerData);
                 }
             }
         }
-        for (Board board : Leaderboard.boardDB.boardsCollection.getBoardList()) {
-            System.out.println(board.rows.get(0).getText());
-            System.out.println(board.rows.get(1).getText());
-            for (int i = 0; i < board.getRows().size(); i++) {
-                if(i >= entityDataArrayList.size()) {
-                    if(board.getRows().size() > 4) {
-                        board.rows.get(i).setText("None");
-                    } else {
-                        board.rows.get(i).setText("");
-                    }
-                } else {
-                    System.out.println(board.rows.get(i));
-                    System.out.println(board.rows.size());
-                    board.rows.get(i).setText(i+1 + ". " + entityDataArrayList.get(i).getName() + ": " + entityDataArrayList.get(i).getScore("PlayerDeathEvent").getScore());
-                }
+
+        if (neededRows(scores) < rows.size()) {
+            for (int i = 0; i < rows.size() - neededRows(scores); i++) {
+                removeRow(rows.size() - 1);
             }
+        }
+
+        for (int i = 0; i < neededRows(scores) && i < maxLength - 1; i++) {
+            if (rows.size() < neededRows(scores))  {
+                addRow(Component.text(i + 1 + ". " + scores.get(i).getKey() + ": " + scores.get(i).getValue()).color(TextColor.fromHexString("#00ffff")));
+            } else {
+                getRow(i).setText(Component.text(i + 1 + ". " + scores.get(i).getKey() + ": " + scores.get(i).getValue()).color(TextColor.fromHexString("#00ffff")));
+            }
+        }
+
+        for (Map.Entry<String, Integer> entry : scores) {
+            Leaderboard.getInstance().log.info(entry.getKey() + ": " + entry.getValue());
         }
         Leaderboard.boardDB.saveData();
+    }
+
+    //
+    private int neededRows(List<Map.Entry<String, Integer>> playerDataList) {
+        return Math.min(playerDataList.size(), getMaxLength());
     }
 }

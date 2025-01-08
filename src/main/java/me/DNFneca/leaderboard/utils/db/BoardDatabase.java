@@ -27,11 +27,10 @@ public class BoardDatabase {
             }
         }
         databaseFilePath = filePath;
-        update();
+        loadData();
     }
 
     public Board getEntity(String id) {
-        update();
         for (Board playerData : Leaderboard.boardDB.boardsCollection.getBoardList()) {
             if (playerData.getId().equals(id)) {
                 return playerData;
@@ -43,27 +42,22 @@ public class BoardDatabase {
     public void saveData() {
         try (Writer writer = new FileWriter(databaseFilePath)) {
             Gson gson = new Gson();
-            gson.toJson(boardsCollection, writer);
+            gson.toJson(boardsCollection, BoardsCollection.class, writer);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
     }
 
-    private void update() {
+    public void loadData() {
         try (Reader reader = new FileReader(databaseFilePath)) {
             Gson gson = new Gson();
             boardsCollection = gson.fromJson(reader, BoardsCollection.class);
             if(boardsCollection == null) boardsCollection = new BoardsCollection(new ArrayList<>());
-        } catch (FileNotFoundException e) {
-            try {
-                File file = new File(databaseFilePath);
-                file.createNewFile();
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
+            Leaderboard.getInstance().log.info(String.valueOf(boardsCollection.getBoardList()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
     }
 }

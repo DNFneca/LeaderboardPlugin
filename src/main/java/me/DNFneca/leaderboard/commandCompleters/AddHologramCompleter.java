@@ -1,5 +1,7 @@
 package me.DNFneca.leaderboard.commandCompleters;
 
+import me.DNFneca.leaderboard.Leaderboard;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;

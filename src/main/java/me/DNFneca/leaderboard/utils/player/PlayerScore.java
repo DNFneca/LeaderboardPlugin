@@ -1,5 +1,9 @@
 package me.DNFneca.leaderboard.utils.player;
 
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Mob;
+
 public class PlayerScore {
     private String scoreName;
     private String score;

@@ -1,7 +1,6 @@
 package me.DNFneca.leaderboard.utils.blacklist;
 
 import me.DNFneca.leaderboard.Leaderboard;
-import me.DNFneca.leaderboard.utils.db.PlayerScoreDatabase;
 import me.DNFneca.leaderboard.utils.player.PlayerScore;
 
 import java.util.ArrayList;
