@@ -65,5 +65,6 @@ public class Database<DBCollectionType> {
     
     public void update() {
         loadData();
+        saveData();
     }
 }

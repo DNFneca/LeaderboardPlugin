@@ -1,6 +1,11 @@
 package me.DNFneca.leaderboard.utils.board;
 
+import me.DNFneca.leaderboard.utils.component.ComponentUtils;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.Style;
+import net.kyori.adventure.text.serializer.ComponentDecoder;
+import net.kyori.adventure.text.serializer.ComponentEncoder;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
@@ -15,42 +20,40 @@ public class BoardRow {
     private double y;
     private double z;
 
-    public BoardRow(String text, Location location) {
+    public BoardRow(Component text, Location location) {
         ArmorStand nameStand = location.getWorld().spawn(location, ArmorStand.class);
-        nameStand.customName(Component.text(text));
+        nameStand.customName(text);
         nameStand.setGravity(false);
         nameStand.setInvisible(true);
         nameStand.setCustomNameVisible(true);
-        if(text == "") nameStand.setCustomNameVisible(false);
+        if(PlainTextComponentSerializer.plainText().serialize(text).isEmpty()) nameStand.setCustomNameVisible(false);
         this.id = nameStand.getUniqueId().toString();
-        this.srtText = text;
+        this.srtText = ComponentUtils.serializeComponent(text);
         worldUUID = location.getWorld().getUID().toString();
         this.x = location.getX();
         this.y = location.getY();
         this.z = location.getZ();
     }
 
-    public BoardRow() {}
-
     public String getId() {
         return id;
     }
 
-    public String getText() {
-        return srtText;
+    public Component getText() {
+        return ComponentUtils.deserializeComponent(srtText);
     }
 
     public void setId(String id) {
         this.id = id;
     }
 
-    public void setText(String text) {
+    public void setText(Component text) {
         ArmorStand row = (ArmorStand) Bukkit.getServer().getEntity(UUID.fromString(id));
         if (row == null) return;
-        if(text == "") row.setCustomNameVisible(false);
+        if(PlainTextComponentSerializer.plainText().serialize(text).isEmpty()) row.setCustomNameVisible(false);
         else row.setCustomNameVisible(true);
-        row.customName(Component.text(text));
-        this.srtText = text;
+        row.customName(text);
+        this.srtText = ComponentUtils.serializeComponent(text);
     }
 
     public Location getLocation() {
